@@ -1,52 +1,95 @@
-import { StyleSheet, Text, SafeAreaView, View } from 'react-native'
-import Button from './src/components/Button'
-import Display from './src/components/Display'
+import React, { Component } from 'react';
+import { StyleSheet, SafeAreaView, Image, Dimensions } from 'react-native';
+import Button from './src/components/Button';
+import Display from './src/components/Display';
+import Imagem from './assets/palmeiras.png'
 
-export default function App() {
-  state = {
-    displayValue: '0',
-  }
+const initialState = {
+  displayValue: '0',
+  clearDisplay: false,
+  operation: null,
+  values: [0, 0],
+  current: 0,
+}
+
+export default class App extends Component {
+  state = { ...initialState }
 
   addDigit = n => {
-    this.setState({displayValue: n})
+    console.debug(typeof this.state.displayValue)
+
+    const clearDisplay = this.state.displayValue === '0' || this.state.clearDisplay;
+    if (n === '.' && !clearDisplay && this.state.displayValue.includes('.')) {
+      return
+    }
+
+    const currentValue = clearDisplay ? '' : this.state.displayValue;
+    const displayValue = currentValue + n;
+    this.setState({ displayValue, clearDisplay: false })
+
+    if (n !== '.') {
+      const newValue = parseFloat(displayValue)
+      const values = [...this.state.values]
+      values[this.state.current] = newValue
+      this.setState({ values })
+    }
   }
 
   clearMemory = () => {
-    this.setState({displayValue: '0'});
+    this.setState({ ...initialState })
   }
 
   setOperation = operation => {
+    if (this.state.current === 0) {
+      this.setState({ operation, current: 1, clearDisplay: true })
+    } else {
+      const equals = operation === '='
+      const values = [...this.state.values]
 
+      try {
+        values[0] = eval(`${values[0]} ${this.state.operation} ${values[1]}`)
+      } catch (e) {
+        values[0] = this.state.values[0]
+      }
+      values[1] = 0
+      this.setState({
+        displayValue: `${values[0]}`,
+        operation: equals ? null : operation,
+        current: equals ? 0 : 1,
+        clearDisplay: !equals,
+        values,
+      })
+    }
   }
 
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <Display value={this.state.displayValue}/>
-      <SafeAreaView style={styles.button}>
-        <Button label='AC' triple onCLick={this.clearMemory}/>
-        <Button label='/' operation onCLick={() => this.setOperation('/')}/>
-        <Button label='7' onCLick={() => this.addDigit(7)}/>
-        <Button label='8' onCLick={() => this.addDigit(7)}/>
-        <Button label='9' onCLick={() => this.addDigit(9)}/>
-        <Button label='*' operation onCLick={() => this.setOperation('*')}/>
-        <Button label='4' onCLick={() => this.addDigit(4)}/>
-        <Button label='5' onCLick={() => this.addDigit(5)}/>
-        <Button label='6' onCLick={() => this.addDigit(6)}/>
-        <Button label='-' operation onCLick={() => this.setOperation('-')}/>
-        <Button label='1' onCLick={() => this.addDigit(1)}/>
-        <Button label='2' onCLick={() => this.addDigit(2)}/>
-        <Button label='3' onCLick={() => this.addDigit(3)}/>
-        <Button label='+' operation onCLick={() => this.setOperation('+')}/>
-        <Button label='0' double onCLick={() => this.addDigit(0)}/>
-        <Button label='.' onCLick={() => this.addDigit('.')}/>
-        <Button label='=' operation onCLick={() => this.setOperation('=')}/>
+  render() {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Image source={Imagem} style={styles.logo} />
+        <Display value={this.state.displayValue} />
+        <SafeAreaView style={styles.button}>
+          <Button label="AC" triple onClick={this.clearMemory} />
+          <Button label="/" operation onClick={this.setOperation} />
+          <Button label="7" onClick={this.addDigit} />
+          <Button label="8" onClick={this.addDigit} />
+          <Button label="9" onClick={this.addDigit} />
+          <Button label="*" operation onClick={this.setOperation} />
+          <Button label="4" onClick={this.addDigit} />
+          <Button label="5" onClick={this.addDigit} />
+          <Button label="6" onClick={this.addDigit} />
+          <Button label="-" operation onClick={this.setOperation} />
+          <Button label="1" onClick={this.addDigit} />
+          <Button label="2" onClick={this.addDigit} />
+          <Button label="3" onClick={this.addDigit} />
+          <Button label="+" operation onClick={this.setOperation} />
+          <Button label="0" double onClick={this.addDigit} />
+          <Button label="." onClick={this.addDigit} />
+          <Button label="=" operation onClick={this.setOperation} />
+        </SafeAreaView>
       </SafeAreaView>
-    </SafeAreaView>
-  );
+    );
+  }
 }
-
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -54,7 +97,13 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+  },
+  logo: {
+    flex: 1,
+    width: Dimensions.get('window').width / 3,
+    margin: 10,
+    marginLeft: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
   }
-})
-
-
+});
